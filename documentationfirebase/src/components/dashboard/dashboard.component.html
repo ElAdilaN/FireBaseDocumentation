@@ -1,0 +1,60 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-4" style="margin: 0 auto">
+      <div class="form-floating mb-3">
+        <input
+          type="text"
+          class="form-control"
+          name="firstName"
+          id="firstName"
+          [(ngModel)]="first_Name"
+        />
+        <label for="firstName">First Name</label>
+      </div>
+
+      <div class="form-floating mb-3">
+        <input
+          type="text"
+          class="form-control"
+          name="lastName"
+          id="lastName"
+          [(ngModel)]="last_Name"
+        />
+        <label for="lastName">Last Name </label>
+      </div>
+      <div class="form-floating mb-3">
+        <input
+          type="email"
+          class="form-control"
+          id="email"
+          name="email"
+          [(ngModel)]="email"
+        />
+        <label for="email">Email address</label>
+      </div>
+      <div class="form-floating mb-3">
+        <input
+          type="text"
+          class="form-control"
+          id="mobile"
+          name="mobile"
+          [(ngModel)]="mobile"
+        />
+        <label for="mobile">Mobile</label>
+      </div>
+      <button
+        type="button"
+        class="btn btn-outline-success"
+        (click)="addStudent()"
+      >
+        Add Student
+      </button>
+    </div>
+    <div class="col-md-8 mt-5">
+      <h5 class="text-danger">Student List</h5>
+      <div class="card p-3">
+        <div class="card-body"></div>
+      </div>
+    </div>
+  </div>
+</div>
