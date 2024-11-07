@@ -11,6 +11,7 @@ import { AuthService } from '../../services/auth.service';
   styleUrl: './forgot-password.component.css',
 })
 export class ForgotPasswordComponent implements OnInit {
+  
   constructor(private auth: AuthService) {}
   email: string = '';
   ngOnInit(): void {}

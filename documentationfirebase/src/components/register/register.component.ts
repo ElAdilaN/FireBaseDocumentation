@@ -11,6 +11,7 @@ import { AuthService } from '../../services/auth.service';
   styleUrl: './register.component.css',
 })
 export class RegisterComponent  {
+  
   constructor(private auth: AuthService) {}
   email: string = '';
   password: string = '';
