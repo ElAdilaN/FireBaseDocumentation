@@ -1,6 +1,5 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import {
-  Auth,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   sendEmailVerification,
@@ -9,6 +8,8 @@ import {
   signInWithPopup,
 } from '@angular/fire/auth';
 
+import { Auth } from '@angular/fire/auth';
+
 import { Router } from '@angular/router';
 import { GoogleAuthProvider } from '@angular/fire/auth';
 
@@ -16,6 +17,7 @@ import { GoogleAuthProvider } from '@angular/fire/auth';
   providedIn: 'root',
 })
 export class AuthService {
+  //   private firestore: Firestore = inject(Firestore); // Inyección del servicio Firestore
   constructor(private auth: Auth, private router: Router) {}
 
   login(email: string, password: string) {

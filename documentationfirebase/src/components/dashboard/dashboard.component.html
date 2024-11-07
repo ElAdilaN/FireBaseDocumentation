@@ -1,6 +1,10 @@
 <div class="container-fluid">
   <div class="row">
-    <div class="col-md-4" style="margin: 0 auto">
+    <div class="col-md-4 nt-4 shadow p-3">
+      <div class="form-floating mb-3 text-center">
+        <h5>Add Student</h5>
+      </div>
+
       <div class="form-floating mb-3">
         <input
           type="text"
@@ -50,10 +54,40 @@
         Add Student
       </button>
     </div>
-    <div class="col-md-8 mt-5">
+    <div class="col-md-8 mt-2">
       <h5 class="text-danger">Student List</h5>
       <div class="card p-3">
-        <div class="card-body"></div>
+        <div class="card-body">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th scope="col">First Name</th>
+                <th scope="col">Last Name</th>
+                <th scope="col">Email</th>
+                <th scope="col">Mobile</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for(student of studentsList ; track student ){
+
+              <tr>
+                <td>{{ student.first_name }}</td>
+                <td>{{ student.last_name }}</td>
+                <td>{{ student.email }}</td>
+                <td>{{ student.mobile }}</td>
+                <td>
+                  <button
+                    class="btn btn-outline-danger"
+                    (click)="deleteStudent(student)"
+                  >
+                    delete
+                  </button>
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
