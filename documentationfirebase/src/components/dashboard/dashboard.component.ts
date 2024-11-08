@@ -1,10 +1,10 @@
-
 import { Component, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { Student } from '../../model/Student';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { DataService } from '../../services/data.service';
+
 
 @Component({
   selector: 'app-dashboard',
@@ -14,6 +14,7 @@ import { DataService } from '../../services/data.service';
   styleUrls: ['./dashboard.component.css'],
 })
 export class DashboardComponent implements OnInit {
+  emailDelete: string = "" ; 
   studentsList: Student[] = [];
   studentObj: Student = {
     id: '',
@@ -27,14 +28,29 @@ export class DashboardComponent implements OnInit {
   last_Name: string = '';
   mobile: string = '';
   email: string = '';
-
+  visible : boolean = true;
   constructor(private auth: AuthService, private data: DataService) {}
 
   ngOnInit(): void {
     this.getAllStudents();
+    this.checkLocalStorageFull();
     this.data.syncOfflineStudents(); // Sync offline data when the app is online
   }
+  
 
+
+  checkLocalStorageFull() {
+   if (typeof window !== 'undefined' && window.localStorage) {
+      if (localStorage.getItem('offlineStudents') != null) {
+      alert("the local storage is void ");
+      
+        //  this.visible = true;
+      } else {
+//        this.visible = false ;
+        alert("the local storage is full  ");
+      }
+    }
+  } 
   logOut() {
     this.auth.logout();
   }
@@ -59,13 +75,19 @@ export class DashboardComponent implements OnInit {
     this.studentObj.email = this.email;
 
     // Check if all fields are filled
-    if (!this.studentObj.first_name || !this.studentObj.last_name || !this.studentObj.email || !this.studentObj.mobile) {
+    if (
+      !this.studentObj.first_name ||
+      !this.studentObj.last_name ||
+      !this.studentObj.email ||
+      !this.studentObj.mobile
+    ) {
       alert('Please fill all the fields.');
       return;
     }
 
     // Add student to Firestore or localStorage
-    this.data.addStudent(this.studentObj)
+    this.data
+      .addStudent(this.studentObj)
       .then(() => {
         console.log('Student added:', this.studentObj);
         this.resetForm(); // Reset form after adding the student
@@ -77,7 +99,8 @@ export class DashboardComponent implements OnInit {
 
   // Update a student
   updateStudent(student: Student) {
-    this.data.updateStudent(student)
+    this.data
+      .updateStudent(student)
       .then(() => {
         console.log('Student updated:', student);
       })
@@ -88,8 +111,13 @@ export class DashboardComponent implements OnInit {
 
   // Delete a student
   deleteStudent(student: Student) {
-    if (window.confirm(`Are you sure you want to delete ${student.first_name} ${student.last_name}?`)) {
-      this.data.deleteStudent(student)
+    if (
+      window.confirm(
+        `Are you sure you want to delete ${student.first_name} ${student.last_name}?`
+      )
+    ) {
+      this.data
+        .deleteStudent(student)
         .then(() => {
           console.log('Student deleted:', student);
         })
@@ -97,6 +125,41 @@ export class DashboardComponent implements OnInit {
           console.error('Error deleting student:', error);
         });
     }
+  }
+
+  async deleteStudent2(){
+    this.studentObj.first_name = this.first_Name;
+    this.studentObj.last_name = this.last_Name;
+    this.studentObj.mobile = this.mobile;
+    this.studentObj.email = this.email;
+
+    // Check if all fields are filled
+    if (
+      !this.studentObj.first_name ||
+      !this.studentObj.last_name ||
+      !this.studentObj.email ||
+      !this.studentObj.mobile
+    ) {
+      alert('Please fill all the fields.');
+      return;
+    }
+
+    this.studentObj.id = await this.data.getIdFromFireBase(this.studentObj) ;
+
+
+
+
+
+    // Add student to Firestore or localStorage
+    this.data
+      .deleteStudent(this.studentObj)
+      .then(() => {
+        console.log('Student Deleted:', this.studentObj);
+        this.resetForm(); // Reset form after adding the student
+      })
+      .catch((error) => {
+        console.error('Error adding student:', error);
+      });
   }
 
   // Reset the form fields
