@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+/* import { Component, OnInit } from '@angular/core';
 import { Student } from '../../model/Student';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
@@ -171,9 +171,9 @@ export class DashboardComponent implements OnInit {
     this.email = '';
   }
 }
+ */
+import { Component, OnInit } from '@angular/core';
 
-/* import { Component, OnInit } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
 import { Student } from '../../model/Student';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
@@ -182,12 +182,13 @@ import { DataService } from '../../services/data.service';
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [FormsModule, RouterOutlet],
+  imports: [FormsModule],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css'],
 })
 export class DashboardComponent implements OnInit {
   studentsList: Student[] = [];
+  fullLost: boolean = true;
   studentObj: Student = {
     id: '',
     first_name: '',
@@ -205,6 +206,8 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.getAllStudents();
+    //this.data.syncOfflineStudents(); // Sync offline data when the app is online
+    //this.data.syncOfflineStudentsDel();
   }
 
   logOut() {
@@ -216,6 +219,14 @@ export class DashboardComponent implements OnInit {
     this.data.getAllStudents().subscribe(
       (students) => {
         this.studentsList = students;
+
+      
+
+        if (this.studentsList.length == 0) {
+          this.fullLost = true;
+        } else {
+          this.fullLost = false;
+        }
       },
       (err) => {
         alert('Error while fetching data: ' + err.message);
@@ -231,25 +242,40 @@ export class DashboardComponent implements OnInit {
     this.studentObj.email = this.email;
 
     // Check if all fields are filled
-    if (!this.studentObj.first_name || !this.studentObj.last_name || !this.studentObj.email || !this.studentObj.mobile) {
+    if (
+      !this.studentObj.first_name ||
+      !this.studentObj.last_name ||
+      !this.studentObj.email ||
+      !this.studentObj.mobile
+    ) {
       alert('Please fill all the fields.');
       return;
     }
 
     // Add student to Firestore
-    this.data.addStudent(this.studentObj)
-      .then(() => {
-        console.log('Student added:', this.studentObj);
-        this.resetForm(); // Reset form after adding the student
-      })
-      .catch((error) => {
-        console.error('Error adding student:', error);
-      });
+    if (this.studentObj != null) {
+      const myvalue = this.data
+        .addStudent(this.studentObj)
+        .then(() => {
+          console.log('Student added:', this.studentObj);
+          
+      
+
+          this.resetForm(); // Reset form after adding the student
+        })
+        .catch((error) => {
+          console.error('Error adding student:', error);
+        });
+      if (myvalue !== null) {
+        this.studentsList.push(this.data.getNewStudent());
+      }
+    }
   }
 
   // Update a student's details
   updateStudent(student: Student) {
-    this.data.updateStudent(student)
+    this.data
+      .updateStudent(student)
       .then(() => {
         console.log('Student updated:', student);
       })
@@ -258,16 +284,43 @@ export class DashboardComponent implements OnInit {
       });
   }
 
-  // Delete a student
+  // Delete a student from list
   deleteStudent(student: Student) {
-    if (window.confirm(`Are you sure you want to delete ${student.first_name} ${student.last_name}?`)) {
-      this.data.deleteStudent(student)
-        .then(() => {
-          console.log('Student deleted:', student);
-        })
-        .catch((error) => {
-          console.error('Error deleting student:', error);
-        });
+    if (
+      window.confirm(
+        `Are you sure you want to delete ${student.first_name} ${student.last_name}?`
+      )
+    ) {
+      //delete from localStorage normal  0
+      //delete freom  (search if exdists )1
+      //delete freom  database 2
+
+      if (this.fullLost) {
+        this.data
+          .deleteStudent(student, 0)
+          .then(() => {
+            console.log('Student deleted:', student);
+            const index = this.studentsList.findIndex(
+              (item) => item.id === student.id
+            );
+            if (index !== -1) {
+              this.studentsList.splice(index, 1);
+              console.log('Student removed from the list:', student);
+            }
+          })
+          .catch((error) => {
+            console.error('Error deleting student:', error);
+          });
+      } else {
+        this.data
+          .deleteStudent(student, 1)
+          .then(() => {
+            console.log('Student deleted:', student);
+          })
+          .catch((error) => {
+            console.error('Error deleting student:', error);
+          });
+      }
     }
   }
 
@@ -278,5 +331,33 @@ export class DashboardComponent implements OnInit {
     this.mobile = '';
     this.email = '';
   }
+
+  async deleteStudent2() {
+    this.studentObj.first_name = this.first_Name;
+    this.studentObj.last_name = this.last_Name;
+    this.studentObj.mobile = this.mobile;
+    this.studentObj.email = this.email;
+
+    // Check if all fields are filled
+    if (
+      !this.studentObj.first_name ||
+      !this.studentObj.last_name ||
+      !this.studentObj.email ||
+      !this.studentObj.mobile
+    ) {
+      alert('Please fill all the fields.');
+      return;
+    }
+
+    // Add student to Firestore or localStorage
+    this.data
+      .deleteStudent(this.studentObj, 2)
+      .then(() => {
+        console.log('Student Deleted:', this.studentObj);
+        this.resetForm(); // Reset form after adding the student
+      })
+      .catch((error) => {
+        console.error('Error adding student:', error);
+      });
+  }
 }
- */

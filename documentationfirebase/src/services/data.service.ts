@@ -28,21 +28,32 @@ export class DataService {
     );
   }
 
- 
   addStudent(student: Student) {
-    if (this.isBrowser() && navigator.onLine) {
-   alert("wrong way ")
-   const studentsCollection = collection(this.firestore, 'Students');
-   const studentRef = doc(studentsCollection);
-   student.id = studentRef.id;
-   return setDoc(studentRef, student); 
-  } else {
-      alert("correct  way ")
-      let offlineStudents = JSON.parse(localStorage.getItem('offlineStudents') || '[]');
+    //    if (this.isBrowser() && navigator.onLine) {
+    if (false) {
+      alert('wrong way ');
+      const studentsCollection = collection(this.firestore, 'Students');
+      const studentRef = doc(studentsCollection);
+      student.id = studentRef.id;
+      return setDoc(studentRef, student);
+    } else {
+      alert('correct  way ');
+      let offlineStudents = JSON.parse(
+        localStorage.getItem('offlineStudents') || '[]'
+      );
       offlineStudents.push(student);
+
       localStorage.setItem('offlineStudents', JSON.stringify(offlineStudents));
+
       return Promise.resolve();
     }
+  }
+
+  getNewStudent() {
+    let offlineStudents = JSON.parse(
+      localStorage.getItem('offlineStudents') || '[]'
+    );
+    return offlineStudents[offlineStudents.length - 1];
   }
 
   getAllStudents(): Observable<Student[]> {
@@ -53,23 +64,74 @@ export class DataService {
     >;
   }
 
-  deleteStudent(student: Student) {
-    if (this.isBrowser() && navigator.onLine) {
+  async deleteStudent(student: Student, way  : number  ) {
+    // if (this.isBrowser() && navigator.onLine) {
+    if (false) {
+      if (
+        student.id === null ||
+        student.id === undefined ||
+        student.id === ''
+      ) {
+        student.id = await this.getIdFromFireBase(student);
+      }
+
       const studentDoc = doc(this.firestore, 'Students', student.id);
       return deleteDoc(studentDoc);
     } else {
-      let offlineStudents = JSON.parse(
-        localStorage.getItem('offlineStudents') || '[]'
-      );
-      offlineStudents = offlineStudents.filter(
-        (s: Student) => s.id !== student.id
-      );
-      localStorage.setItem('offlineStudents', JSON.stringify(offlineStudents));
-      return Promise.resolve();
+      if(way === 0 ){
+        let offlineStudents = JSON.parse(
+          localStorage.getItem('offlineStudents') || '[]'
+        );
+        offlineStudents = offlineStudents.filter(
+          (s: Student) =>
+            s.first_name !== student.first_name &&
+            s.last_name !== student.last_name &&
+            s.email !== student.email &&
+            s.mobile !== student.mobile
+        );
+        localStorage.setItem(
+          'offlineStudents',
+          JSON.stringify(offlineStudents)
+        );
+        return Promise.resolve();
+  
+      }else if (way === 2){
+        let offlineStudentsDelete = JSON.parse(
+          localStorage.getItem('offlineStudentsDelete') || '[]'
+        );
+        offlineStudentsDelete.push(student);
+        localStorage.setItem(
+          'offlineStudentsDelete',
+          JSON.stringify(offlineStudentsDelete)
+        );
+        return Promise.resolve();
+  
+      }
+
     }
   }
 
-  async getIdFromFireBase(student: Student) {
+  deleteStudentForm(student: Student) {
+    if (this.isBrowser() && navigator.onLine) {
+      alert('You can just delete it from the list broo , come ooon ');
+      return;
+    } else {
+
+      let offlineStudentsDelete = JSON.parse(
+        localStorage.getItem('offlineStudentsDelete') || '[]'
+      );
+      offlineStudentsDelete.push(student);
+      localStorage.setItem(
+        'offlineStudentsDelete',
+        JSON.stringify(offlineStudentsDelete)
+      );
+      return Promise.resolve();
+
+
+    }
+  }
+
+  async getIdFromFireBase(student: Student): Promise<string> {
     try {
       const studentsCollection = collection(this.firestore, 'Students');
 
@@ -120,27 +182,32 @@ export class DataService {
     }
   }
 
-   syncOfflineStudents() {
+  syncOfflineStudents() {
     if (this.isBrowser() && navigator.onLine) {
       const offlineStudents = JSON.parse(
         localStorage.getItem('offlineStudents') || '[]'
       );
-
       if (offlineStudents.length > 0) {
-        for (const student of offlineStudents) {
-          try {
-            // Add student to Firebase (assumes addStudent returns a promise)
-           this.addStudent(student);
-            // Remove from localStorage after successful addition
-           // this.removeOfflineStudent(student);
-            console.log(
-              `Student ${student.id} added and removed from offline storage`
-            );
-          } catch (error) {
-            console.error(`Failed to add student ${student.id}:`, error);
-            // Optionally, you could also handle retries here or log the error to track failed syncs
-          }
-        }
+        offlineStudents.forEach((student: Student) => {
+          this.addStudent(student).then(() => {
+            this.removeOfflineStudent(student);
+          });
+        });
+      }
+    }
+  }
+
+  syncOfflineStudentsDel() {
+    if (this.isBrowser() && navigator.onLine) {
+      const offlineStudentsDelete = JSON.parse(
+        localStorage.getItem('offlineStudentsDelete') || '[]'
+      );
+      if (offlineStudentsDelete.length > 0) {
+        offlineStudentsDelete.forEach((student: Student) => {
+          this.deleteStudent(student , 0 ).then(() => {
+            this.removeOfflineStudentDel(student);
+          });
+        });
       }
     }
   }
@@ -149,7 +216,6 @@ export class DataService {
     let offlineStudents = JSON.parse(
       localStorage.getItem('offlineStudents') || '[]'
     );
-    console.log('Before removal: ', offlineStudents);
     offlineStudents = offlineStudents.filter(
       (s: Student) =>
         s.first_name !== student.first_name &&
@@ -157,8 +223,22 @@ export class DataService {
         s.email !== student.email &&
         s.mobile !== student.mobile
     );
-
-    console.log('After removal: ', offlineStudents);
     localStorage.setItem('offlineStudents', JSON.stringify(offlineStudents));
+  }
+  removeOfflineStudentDel(student: Student) {
+    let offlineStudentsDelete = JSON.parse(
+      localStorage.getItem('offlineStudentsDelete') || '[]'
+    );
+    offlineStudentsDelete = offlineStudentsDelete.filter(
+      (s: Student) =>
+        s.first_name !== student.first_name &&
+        s.last_name !== student.last_name &&
+        s.email !== student.email &&
+        s.mobile !== student.mobile
+    );
+    localStorage.setItem(
+      'offlineStudentsDelete',
+      JSON.stringify(offlineStudentsDelete)
+    );
   }
 }
