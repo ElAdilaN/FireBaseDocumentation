@@ -1,29 +1,43 @@
 import { Injectable } from '@angular/core';
-import { Firestore,  collection, query, where, getDocs,  doc, setDoc, deleteDoc, updateDoc, collectionData } from '@angular/fire/firestore';
+import {
+  Firestore,
+  collection,
+  query,
+  where,
+  getDocs,
+  doc,
+  setDoc,
+  deleteDoc,
+  updateDoc,
+  collectionData,
+} from '@angular/fire/firestore';
 import { inject } from '@angular/core';
 import { Student } from '../model/Student';
 import { Observable } from 'rxjs';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class DataService {
-  
   private firestore: Firestore = inject(Firestore); // Inject Firestore service
-  
+
   // Utility to check if the code is running in the browser
   private isBrowser(): boolean {
-    return typeof window !== 'undefined' && typeof window.navigator !== 'undefined';
+    return (
+      typeof window !== 'undefined' && typeof window.navigator !== 'undefined'
+    );
   }
 
+ 
   addStudent(student: Student) {
     if (this.isBrowser() && navigator.onLine) {
-   
-      const studentsCollection = collection(this.firestore, 'Students');
-      const studentRef = doc(studentsCollection);
-      student.id = studentRef.id;
-      return setDoc(studentRef, student); 
-    } else {
+   alert("wrong way ")
+   const studentsCollection = collection(this.firestore, 'Students');
+   const studentRef = doc(studentsCollection);
+   student.id = studentRef.id;
+   return setDoc(studentRef, student); 
+  } else {
+      alert("correct  way ")
       let offlineStudents = JSON.parse(localStorage.getItem('offlineStudents') || '[]');
       offlineStudents.push(student);
       localStorage.setItem('offlineStudents', JSON.stringify(offlineStudents));
@@ -34,7 +48,9 @@ export class DataService {
   getAllStudents(): Observable<Student[]> {
     const studentsCollection = collection(this.firestore, 'Students');
 
-    return collectionData(studentsCollection, { idField: 'id' }) as Observable<Student[]>;
+    return collectionData(studentsCollection, { idField: 'id' }) as Observable<
+      Student[]
+    >;
   }
 
   deleteStudent(student: Student) {
@@ -42,8 +58,12 @@ export class DataService {
       const studentDoc = doc(this.firestore, 'Students', student.id);
       return deleteDoc(studentDoc);
     } else {
-      let offlineStudents = JSON.parse(localStorage.getItem('offlineStudents') || '[]');
-      offlineStudents = offlineStudents.filter((s: Student) => s.id !== student.id);
+      let offlineStudents = JSON.parse(
+        localStorage.getItem('offlineStudents') || '[]'
+      );
+      offlineStudents = offlineStudents.filter(
+        (s: Student) => s.id !== student.id
+      );
       localStorage.setItem('offlineStudents', JSON.stringify(offlineStudents));
       return Promise.resolve();
     }
@@ -83,32 +103,62 @@ export class DataService {
       const studentDoc = doc(this.firestore, 'Students', student.id);
       return updateDoc(studentDoc, { ...student });
     } else {
-      let offlineStudents = JSON.parse(localStorage.getItem('offlineStudents') || '[]');
-      const index = offlineStudents.findIndex((s: Student) => s.id === student.id);
+      let offlineStudents = JSON.parse(
+        localStorage.getItem('offlineStudents') || '[]'
+      );
+      const index = offlineStudents.findIndex(
+        (s: Student) => s.id === student.id
+      );
       if (index !== -1) {
         offlineStudents[index] = student;
-        localStorage.setItem('offlineStudents', JSON.stringify(offlineStudents));
+        localStorage.setItem(
+          'offlineStudents',
+          JSON.stringify(offlineStudents)
+        );
       }
       return Promise.resolve();
     }
   }
 
-  syncOfflineStudents() {
+   syncOfflineStudents() {
     if (this.isBrowser() && navigator.onLine) {
-      const offlineStudents = JSON.parse(localStorage.getItem('offlineStudents') || '[]');
+      const offlineStudents = JSON.parse(
+        localStorage.getItem('offlineStudents') || '[]'
+      );
+
       if (offlineStudents.length > 0) {
-        offlineStudents.forEach((student: Student) => {
-          this.addStudent(student).then(() => {
-            this.removeOfflineStudent(student);
-          });
-        });
+        for (const student of offlineStudents) {
+          try {
+            // Add student to Firebase (assumes addStudent returns a promise)
+           this.addStudent(student);
+            // Remove from localStorage after successful addition
+           // this.removeOfflineStudent(student);
+            console.log(
+              `Student ${student.id} added and removed from offline storage`
+            );
+          } catch (error) {
+            console.error(`Failed to add student ${student.id}:`, error);
+            // Optionally, you could also handle retries here or log the error to track failed syncs
+          }
+        }
       }
     }
   }
 
   removeOfflineStudent(student: Student) {
-    let offlineStudents = JSON.parse(localStorage.getItem('offlineStudents') || '[]');
-    offlineStudents = offlineStudents.filter((s: Student) => s.id !== student.id);
+    let offlineStudents = JSON.parse(
+      localStorage.getItem('offlineStudents') || '[]'
+    );
+    console.log('Before removal: ', offlineStudents);
+    offlineStudents = offlineStudents.filter(
+      (s: Student) =>
+        s.first_name !== student.first_name &&
+        s.last_name !== student.last_name &&
+        s.email !== student.email &&
+        s.mobile !== student.mobile
+    );
+
+    console.log('After removal: ', offlineStudents);
     localStorage.setItem('offlineStudents', JSON.stringify(offlineStudents));
   }
 }

@@ -1,20 +1,19 @@
 import { Component, OnInit } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
 import { Student } from '../../model/Student';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { DataService } from '../../services/data.service';
 
-
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [FormsModule, RouterOutlet],
+  imports: [FormsModule],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css'],
 })
 export class DashboardComponent implements OnInit {
-  emailDelete: string = "" ; 
+  emailDelete: string = '';
+  fullLost: boolean = true;
   studentsList: Student[] = [];
   studentObj: Student = {
     id: '',
@@ -28,38 +27,43 @@ export class DashboardComponent implements OnInit {
   last_Name: string = '';
   mobile: string = '';
   email: string = '';
-  visible : boolean = true;
+  visible: boolean = true;
   constructor(private auth: AuthService, private data: DataService) {}
 
-  ngOnInit(): void {
+  async ngOnInit() {
     this.getAllStudents();
-    this.checkLocalStorageFull();
     this.data.syncOfflineStudents(); // Sync offline data when the app is online
   }
-  
 
-
-  checkLocalStorageFull() {
-   if (typeof window !== 'undefined' && window.localStorage) {
-      if (localStorage.getItem('offlineStudents') != null) {
-      alert("the local storage is void ");
-      
-        //  this.visible = true;
-      } else {
-//        this.visible = false ;
-        alert("the local storage is full  ");
-      }
-    }
-  } 
   logOut() {
     this.auth.logout();
   }
 
   // Get all students from Firestore
-  getAllStudents(): void {
+  async getAllStudents() {
     this.data.getAllStudents().subscribe(
       (students) => {
         this.studentsList = students;
+        console.log(students);
+        console.log('2', this.studentsList.length);
+
+        if (this.studentsList.length == 0) {
+          this.fullLost = true;
+        } else {
+          this.fullLost = false;
+        }
+        if (this.fullLost == true) {
+          // Check if we're in the browser (in the client-side)
+          console.log(this.studentsList);
+          if (typeof window !== 'undefined') {
+            alert(this.studentsList.length);
+            alert('Connexion == 0%');
+          }
+        } else {
+          if (typeof window !== 'undefined') {
+            alert('Connexion more than 0%');
+          }
+        }
       },
       (err) => {
         alert('Error while fetching data: ' + err.message);
@@ -84,13 +88,13 @@ export class DashboardComponent implements OnInit {
       alert('Please fill all the fields.');
       return;
     }
+    this.resetForm(); // Reset form after adding the student
 
     // Add student to Firestore or localStorage
     this.data
       .addStudent(this.studentObj)
       .then(() => {
         console.log('Student added:', this.studentObj);
-        this.resetForm(); // Reset form after adding the student
       })
       .catch((error) => {
         console.error('Error adding student:', error);
@@ -127,7 +131,7 @@ export class DashboardComponent implements OnInit {
     }
   }
 
-  async deleteStudent2(){
+  async deleteStudent2() {
     this.studentObj.first_name = this.first_Name;
     this.studentObj.last_name = this.last_Name;
     this.studentObj.mobile = this.mobile;
@@ -144,11 +148,7 @@ export class DashboardComponent implements OnInit {
       return;
     }
 
-    this.studentObj.id = await this.data.getIdFromFireBase(this.studentObj) ;
-
-
-
-
+    this.studentObj.id = await this.data.getIdFromFireBase(this.studentObj);
 
     // Add student to Firestore or localStorage
     this.data
@@ -164,6 +164,7 @@ export class DashboardComponent implements OnInit {
 
   // Reset the form fields
   resetForm() {
+    alert('form reset success ');
     this.first_Name = '';
     this.last_Name = '';
     this.mobile = '';
