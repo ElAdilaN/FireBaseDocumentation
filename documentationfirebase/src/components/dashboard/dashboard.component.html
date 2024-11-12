@@ -57,10 +57,18 @@
      
         <button
           type="button"
-          class="btn btn-outline-success"
+          class="btn btn-outline-danger"
           (click)="deleteStudent2()"
         >
           Delete Student
+        </button>
+    
+        <button
+          type="button"
+          class="btn btn-outline-success"
+          (click)="updateStudent2()"
+        >
+          Update  Student
         </button>
     
 
@@ -85,7 +93,7 @@
               <tbody>
                 @for(student of studentsList ; track student ){
   
-                <tr>
+                <tr  >
                   <td>{{ student.first_name }}</td>
                   <td>{{ student.last_name }}</td>
                   <td>{{ student.email }}</td>
@@ -96,6 +104,12 @@
                       (click)="deleteStudent(student)"
                     >
                       delete
+                    </button>
+                    <button
+                      class="btn btn-outline-success"
+                      (click)="update(student)"
+                    >
+                      Update 
                     </button>
                   </td>
                 </tr>
