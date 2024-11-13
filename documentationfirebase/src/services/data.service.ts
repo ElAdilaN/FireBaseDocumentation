@@ -27,12 +27,11 @@ export class DataService {
       typeof window !== 'undefined' && typeof window.navigator !== 'undefined'
     );
   }
-  isOnline: boolean = false    ;
+  isOnline: boolean = false       ;
 
   /**************** ADD STUDENT FUNCTIONS ************* */
 
   addStudent(student: Student) {
-    
     if (this.isOnline) {
       return this.addStudentDirectlyToFireBase(student);
     } else {
@@ -47,7 +46,6 @@ export class DataService {
     return setDoc(studentRef, student);
   }
   addStudentUsingLocalStorage(student: Student): Promise<void> {
-
     let offlineStudents = JSON.parse(
       localStorage.getItem('offlineStudents') || '[]'
     );
@@ -64,6 +62,7 @@ export class DataService {
     if (this.isOnline) {
       this.DeleteDirectlyFromFireBase(student);
     } else {
+      console.log(' way ' + way);
       if (way === 0) {
         //delete a student added when offline
         this.DeleteFromLocalStorage(student);
@@ -86,6 +85,9 @@ export class DataService {
     let offlineStudents = JSON.parse(
       localStorage.getItem('offlineStudents') || '[]'
     );
+
+    console.log('before del ' + offlineStudents);
+
     offlineStudents = offlineStudents.filter(
       (s: Student) =>
         s.first_name !== student.first_name &&
@@ -93,6 +95,7 @@ export class DataService {
         s.email !== student.email &&
         s.mobile !== student.mobile
     );
+    console.log('after del ' + offlineStudents);
     localStorage.setItem('offlineStudents', JSON.stringify(offlineStudents));
     return Promise.resolve();
   }
@@ -120,77 +123,80 @@ export class DataService {
 
   /****************  UPDATE  FUNCTIONS ****************** */
 
-  async updateStudent(oldstudent: Student , newStudent: Student, way: number) {
+  async updateStudent(oldstudent: Student, newStudent: Student, way: number) {
     // if (this.isBrowser() && navigator.onLine) {
-    console.log(way + "?");
     if (this.isOnline) {
-      this.updateDirectlyFromFireBase(oldstudent , newStudent);
+      this.updateDirectlyFromFireBase(oldstudent, newStudent);
     } else {
-     /*  if (way === 0) {
+      //  if (way === 0) {
         //delete a student added when offline
-        this.updateStudentInLocalStorage(student);
-      } else if (way === 1) {
-        //delete from firebase using the local storage */
+        this.updateStudentInLocalStorage(oldstudent , newStudent);
+      //} else if (way === 1) {
+        /// /delete from firebase using the local storage
 
-        this.UpdateWhenInternetLostOnTheMiddle(oldstudent , newStudent);
+      //this.UpdateWhenInternetLostOnTheMiddle(oldstudent, newStudent);
       //}
     }
   }
 
-  updateStudentInLocalStorage(oldStudent: Student, updatedStudent: Student): Promise<void> {
-    console.log("Correct update");
+  updateStudentInLocalStorage(
+    oldStudent: Student,
+    updatedStudent: Student
+  ): Promise<void> {
+    console.log('Correct update');
 
     // Get the current list of offline students from localStorage
-    let offlineStudents = JSON.parse(localStorage.getItem('offlineStudents') || '[]');
+    let offlineStudents = JSON.parse(
+      localStorage.getItem('offlineStudents') || '[]'
+    );
 
     // Find the student to update and modify the properties
     offlineStudents = offlineStudents.map((s: Student) => {
-        if (
-            s.first_name === oldStudent.first_name &&
-            s.last_name === oldStudent.last_name &&
-            s.email === oldStudent.email &&
-            s.mobile === oldStudent.mobile
-        ) {
-            // Update the student with the new data
-            return { ...s, ...updatedStudent }; // Merge the updated properties with the existing ones
-        }
-        return s; // If no match, return the student as is
+      if (
+        s.first_name === oldStudent.first_name &&
+        s.last_name === oldStudent.last_name &&
+        s.email === oldStudent.email &&
+        s.mobile === oldStudent.mobile
+      ) {
+        // Update the student with the new data
+        return { ...s, ...updatedStudent }; // Merge the updated properties with the existing ones
+      }
+      return s; // If no match, return the student as is
     });
 
     // Save the updated list back to localStorage under the correct key
     localStorage.setItem('offlineStudents', JSON.stringify(offlineStudents));
 
     return Promise.resolve();
-}
-
+  }
 
   UpdateInFireBaseUsingLocalStorage(student: Student) {
-    console.log("Entrada al metode");
+    console.log('Entrada al metode');
     let offlineStudentsDelete = JSON.parse(
       localStorage.getItem('offlineStudentsUpdate') || '[]'
     );
     offlineStudentsDelete.push(student);
 
-
-    this.CrearLocalStorage('offlineStudentsUpdate',
-       JSON.stringify(offlineStudentsDelete));
+    this.CrearLocalStorage(
+      'offlineStudentsUpdate',
+      JSON.stringify(offlineStudentsDelete)
+    );
     return Promise.resolve();
   }
 
-
-  updateDirectlyFromFireBase(student: Student , newStudent:Student) {
+  updateDirectlyFromFireBase(student: Student, newStudent: Student) {
     const studentDoc = doc(this.firestore, 'Students', student.id);
-    return updateDoc(studentDoc, { ...student });
+    return updateDoc(studentDoc, { ...newStudent });
   }
 
-  UpdateWhenInternetLostOnTheMiddle(student: Student , newStudent: Student) {
-    console.log("within");
-    console.log("student updated " + student.first_name)
+  UpdateWhenInternetLostOnTheMiddle(student: Student, newStudent: Student) {
+    console.log('within');
+    console.log('student updated ' + student.first_name);
     if (this.studentExistsInLocalStorage(student)) {
-      console.log("exist")
-      return this.updateStudentInLocalStorage(student ,  newStudent);
+      console.log('exist');
+      return this.updateStudentInLocalStorage(student, newStudent);
     } else {
-      console.log("no exist");
+      console.log('no exist');
       return this.UpdateInFireBaseUsingLocalStorage(student);
     }
   }
@@ -255,7 +261,6 @@ export class DataService {
 
   getAllStudents(): Observable<Student[]> {
     const studentsCollection = collection(this.firestore, 'Students');
-
     return collectionData(studentsCollection, { idField: 'id' }) as Observable<
       Student[]
     >;
@@ -277,7 +282,7 @@ export class DataService {
       return Promise.resolve();
     }
   }
-  
+
   ///////////*** RESET LOCAL STORAGE ***///////////////////
   /********** push changes to the database  */
   syncOfflineStudents() {
@@ -285,6 +290,11 @@ export class DataService {
       const offlineStudents = JSON.parse(
         localStorage.getItem('offlineStudents') || '[]'
       );
+
+      if (!localStorage.getItem('offlineStudents')) {
+        localStorage.setItem('offlineStudents', JSON.stringify([]));
+      }
+
       if (offlineStudents.length > 0) {
         offlineStudents.forEach((student: Student) => {
           this.addStudent(student).then(() => {
@@ -300,27 +310,36 @@ export class DataService {
       const offlineStudentsDelete = JSON.parse(
         localStorage.getItem('offlineStudentsDelete') || '[]'
       );
+
+      
+      if (!localStorage.getItem('offlineStudentsDelete')) {
+        localStorage.setItem('offlineStudentsDelete', JSON.stringify([]));
+      }
       if (offlineStudentsDelete.length > 0) {
         offlineStudentsDelete.forEach((student: Student) => {
           this.deleteStudent(student, 0).then(() => {
             this.removeOfflineStudentDel(student);
-            console.log("removed del ");
+            console.log('removed del ');
           });
         });
       }
     }
   }
-  
+
   syncOfflineStudentsUpdate() {
     if (this.isBrowser() && navigator.onLine) {
       const offlineStudentsDelete = JSON.parse(
         localStorage.getItem('offlineStudentsUpdate') || '[]'
       );
-      console.log("fora" + offlineStudentsDelete.length);
+
+      if (!localStorage.getItem('offlineStudentsUpdate')) {
+        localStorage.setItem('offlineStudentsUpdate', JSON.stringify([]));
+      }
+      console.log('fora' + offlineStudentsDelete.length);
       if (offlineStudentsDelete.length > 0) {
         offlineStudentsDelete.forEach((student: Student) => {
-          console.log("adins");
-          this.updateStudent(student , student, 0).then(() => {
+          console.log('adins');
+          this.updateStudent(student, student, 0).then(() => {
             this.removeOfflineStudentUpdate(student);
           });
         });
@@ -330,16 +349,16 @@ export class DataService {
 
   /**
    * Methot that creates an localStorage.
-   * @param name Name of the Id to the localStorage 
+   * @param name Name of the Id to the localStorage
    * @param value Value to localstorage
    */
-  CrearLocalStorage(name : string, value: any){
+  CrearLocalStorage(name: string, value: any) {
     localStorage.setItem(name, value);
   }
   /********** void the local storage variables */
   /**
-   * 
-   * @param student 
+   *
+   * @param student
    */
   removeOfflineStudent(student: Student) {
     let offlineStudents = JSON.parse(
@@ -386,7 +405,6 @@ export class DataService {
       JSON.stringify(offlineStudentsDelete)
     );
   }
-  
 
   ///////////////////////////////////////////////////////////////////////
 }

@@ -45,16 +45,19 @@ export class DashboardComponent implements OnInit {
   //delete freom  database 2
 
   way() {
-    return 1;
+    return 0;
   }
 
   ngOnInit(): void {
     this.getAllStudents();
+    
+
     this.data.syncOfflineStudents(); // Sync offline data when the app is online
     this.data.syncOfflineStudentsDel();
     this.data.syncOfflineStudentsUpdate();
   }
-
+  
+ 
   logOut() {
     this.auth.logout();
   }
@@ -62,8 +65,6 @@ export class DashboardComponent implements OnInit {
   // Get all students and display them in the UI
   getAllStudents(): void {
 
-
-    
     this.data.getAllStudents().subscribe(
       (students) => {
         this.studentsList = students;
@@ -117,14 +118,12 @@ export class DashboardComponent implements OnInit {
 
   // Update a student's details
   updateStudent(Oldstudent: Student , newStudent : Student ) {
+    console.log(Oldstudent.first_name + " old");
+    console.log(newStudent.first_name + " new");
     this.data
       .updateStudent(Oldstudent  ,newStudent , this.way())
       .then(() => {
         console.log('Student updated:', newStudent);
-
-
-
-
       })
       .catch((error) => {
         console.error('Error updating student:', error);
@@ -141,9 +140,11 @@ export class DashboardComponent implements OnInit {
       this.data
         .deleteStudent(student, this.way())
         .then(() => {
-          console.log('Student deleted:', student);
           const index = this.studentsList.findIndex(
-            (item) => item.id === student.id
+            (item) => item.first_name === student.first_name
+            && item.last_name === student.last_name
+            && item.mobile === student.mobile
+            && item.email === student.email
           );
           if (index !== -1) {
             this.studentsList.splice(index, 1);
@@ -183,7 +184,7 @@ export class DashboardComponent implements OnInit {
 
     // Add student to Firestore or localStorage
     this.data
-      .deleteStudent(this.studentObj, 2)
+      .deleteStudent(this.studentObj, 1)
       .then(() => {
         console.log('Student Deleted:', this.studentObj);
         this.resetForm(); // Reset form after adding the student
